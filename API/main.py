@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from API_front_exercici.API import database  
 from pydantic import BaseModel  
 from typing import List, Optional  
@@ -27,9 +27,12 @@ def read_root():
     return ("Bienvenido a la base de datos de alumnos")
 
 @app.get("/alumne/list", response_model=List[TablaAlumne])
-def read_alumnos():
+def read_alumnos(orderby: Optional[str] = Query(None, enum=["asc", "desc"]),
+                 contain: Optional[str] = None, 
+                 skip: int = 0, 
+                 limit: Optional[int] = None):
     # Ruta GET que devuelve una lista de todos los alumnos
-    alumnos = db_alumnes.list_alumnos()
+    alumnos = db_alumnes.list_alumnos(orderby=orderby, contain=contain, skip=skip, limit=limit)
     return alumnos
 
 @app.get("/alumne/show/{id}")

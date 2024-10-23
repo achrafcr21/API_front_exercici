@@ -1,20 +1,41 @@
 from API_front_exercici.API.database import db_client
 
-def list_alumnos():
-    conn = db_client()  # Inicia conexión con la base de datos
+def list_alumnos(orderby=None, contain=None, skip=0, limit=None):
+    conn = db_client()
+    query = """
+    SELECT alumne.NomAlumne, alumne.Cicle, alumne.Curs, alumne.Grup, aula.DescAula 
+    FROM alumne 
+    JOIN aula ON alumne.IdAula = aula.IdAula
+    """
+    params = []
+
+    if contain:
+        query += " WHERE alumne.NomAlumne LIKE %s"
+        params.append(f"%{contain}%")
+
+    if orderby:
+        query += " ORDER BY alumne.NomAlumne " + ("ASC" if orderby == "asc" else "DESC")
+
+    if limit is not None:
+        query += " LIMIT %s"
+        params.append(limit)
+
+    if skip:
+        query += " OFFSET %s"
+        params.append(skip)
+
     try:
-        cur = conn.cursor(dictionary=True)  # Crea un cursor que devuelve los datos en formato diccionario
-        cur.execute("SELECT alumne.NomAlumne ,alumne.Cicle, alumne.Curs, alumne.Grup, aula.DescAula FROM alumne JOIN aula ON alumne.IdAula = aula.IdAula")  # Ejecuta la consulta SQL para seleccionar todos los alumnos
-        alumnos = cur.fetchall()  # Recoge todos los registros en una lista de diccionarios
-        # Modifica aquí para ajustar la estructura de datos devuelta
+        cur = conn.cursor(dictionary=True)
+        cur.execute(query, params)
+        alumnos = cur.fetchall()
         return [{"NomAlumne": alumne["NomAlumne"],
                  "Cicle": alumne["Cicle"],
                  "Curs": alumne["Curs"],
                  "Grup": alumne["Grup"],
                  "DescAula": alumne["DescAula"]} for alumne in alumnos]
     finally:
-        conn.close()  # Asegura que la conexión se cierra después de la consulta
-
+        conn.close()
+        
 def get_alumno_by_id(id):
     conn = db_client()
     try:
